@@ -11,9 +11,10 @@ export const perspective = {
     translateY: 0,
     translateX: 0,
     transition: {
-      duration: 0.5,
+      duration: 0.3,
       delay: 0.1 * i,
       ease: [0.76, 0, 0.24, 1]
+    //   ease: [0.215, 0.61, 0.355, 1],
     },
   }),
   exit: {

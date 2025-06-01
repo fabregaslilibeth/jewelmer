@@ -63,7 +63,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-10 shadow-md">
+    <nav className="fixed top-0 left-0 right-0 z-10 shadow-md bg-menu-bg xl:bg-background">
       {/* Top row with logo and icons */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
@@ -183,7 +183,7 @@ export default function Navbar() {
                           className="absolute left-0 mt-2 w-48 shadow-lg z-60"
                           style={{ perspective: '120px', perspectiveOrigin: 'left' }}
                         >
-                          <div className="py-1">
+                          <div className="">
                             {item.dropdown.map((dropdownItem, index) => (
                               <div key={dropdownItem.title} className="relative">
                                   <motion.button
@@ -192,7 +192,7 @@ export default function Navbar() {
                                     initial="initial"
                                     animate="enter"
                                     exit="exit"
-                                    transition={{ duration: 0.3 }}
+                                    transition={{ duration: 0.3, ease: [0.76, 0, 0.24, 1] }}
                                     onClick={() => dropdownItem.dropdown && handleNestedDropdownClick(dropdownItem.title)}
                                     className="w-full text-left px-4 py-4 text-sm group link link-border"
                                     style={{ transform: 'translateX(4px)', perspective: '120px', perspectiveOrigin: 'right' }}
@@ -223,11 +223,11 @@ export default function Navbar() {
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: 20 }}
-                                        transition={{ duration: 0.3, ease: [0.76, 0, 0.24, 1] }}
-                                        className="absolute left-full top-0 w-48 shadow-lg"
+                                        transition={{ duration: 0.4, ease: [0.76, 0, 0.24, 1] }}
+                                        className="absolute left-full -top-2 w-48 shadow-lg"
                                         style={{ transform: 'translateX(4px)', perspective: '120px', perspectiveOrigin: 'left' }}
                                       >
-                                        <div className="py-1">
+                                        <div className="">
                                           {dropdownItem.dropdown.map((nestedItem, index) => (
                                             <motion.div
                                               key={nestedItem.title}
@@ -274,10 +274,10 @@ export default function Navbar() {
           <motion.div
             initial={{ opacity: 0, rotateX: 90, translateY: 80, translateX: -20 }}
             animate={{ opacity: 1, rotateX: 0, translateY: 0, translateX: 0 }}
-            exit={{ opacity: 0, rotateX: 90, translateY: 80, translateX: -20 }}
+            exit={{ opacity: 0, rotateX: 90, translateY: 80, translateX: 0 }}
             transition={{ duration: 0.65, ease: [0.215, 0.61, 0.355, 1] }}
-            className="xl:hidden overflow-hidden"
-            style={{ perspective: '120px', perspectiveOrigin: 'top' }}
+            className="xl:hidden overflow-hidden bg-menu-bg"
+            style={{ perspective: '120px', perspectiveOrigin: 'top', transformOrigin: 'top' }}
           >
             <div className="pt-2 pb-3 space-y-1 max-h-[calc(100vh-5rem)] overflow-y-auto">
               {navItems.map((item, index) => (

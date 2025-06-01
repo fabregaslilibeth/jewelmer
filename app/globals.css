@@ -6,8 +6,8 @@
   --accent: #95A3BF;
   --foreground: #84754e;
   --border: #bebebe;
-  --menu-hover-bg: #e2ddd4;
-  --menu-hover-text: #84754e;
+  --menu-bg: #e2ddd4;
+  --menu-text: #84754e;
 }
 
 @theme inline {
@@ -16,19 +16,19 @@
   --color-accent: var(--accent);
   --color-secondary: var(--secondary);
   --font-sans: var(--font-lato);
-  --menu-hover-bg: #4a453b;
-  --menu-hover-text: #f0ece6;
+  --color-menu-bg: var(--menu-bg);
+  --color-menu-text: var(--menu-text);
 }
 
 /* Dark mode styles */
 [data-theme="dark"] {
   --foreground: #f0ece6;
-  --background: #2f2b24;
+  --background: #4a453b;
   --secondary: #a89c76;
   --accent: #2f2b24;
   --border: #E5E0DD;
-  --menu-hover-bg: #4a453b;
-  --menu-hover-text: #f0ece6;
+  --menu-bg: #2f2b24;
+  --menu-text: #f0ece6;
 }
 
 /* System preference dark mode */
@@ -51,19 +51,19 @@ body {
 
 .link {
   text-align: center;
-  color: var(--menu-hover-text);
+  color: var(--menu-text);
   text-transform: uppercase;
   transition: all 0.3s ease;
 }
 
 .link-border {
-  background: var(--menu-hover-bg);
-  color: var(--menu-hover-text);
+  background: var(--menu-bg);
+  color: var(--menu-text);
   border-bottom: 1px solid var(--border);
 }
 
 .link:hover {
   opacity: 0.8;
-  background: var(--menu-hover-text);
-  color: var(--menu-hover-bg);
+  background: var(--menu-text);
+  color: var(--menu-bg);
 }
