@@ -24,7 +24,7 @@ export const navItems: NavItem[] = [
             { title: 'Caravelles', href: '/collections/caravelles' },
             { title: 'Petits Coeurs', href: '/collections/petits-coeurs' },
             { title: 'Les Mignonnes', href: '/collections/les-mignonnes' },
-            { title: 'View All', href: '/collections/all' },
+            { title: 'View All', href: '/collections' },
         ]
       },
       { 
@@ -35,7 +35,7 @@ export const navItems: NavItem[] = [
           { title: 'Rings', href: '/collections/rings' },
           { title: 'Earrings', href: '/collections/earrings' },
           { title: 'Necklaces', href: '/collections/necklaces' },
-          { title: 'View All', href: '/collections/all' },
+          { title: 'View All', href: '/collections' },
         ] 
       },
       { title: 'High Jewelry', href: '/products/category3' },
