@@ -38,7 +38,7 @@ export const navItems: NavItem[] = [
           { title: 'View All', href: '/collections' },
         ] 
       },
-      { title: 'High Jewelry', href: '/products/category3' },
+      { title: 'High Jewelry', href: '/pages/high-jewelry' },
       { title: 'Lookbooks', href: '/lookbooks' },
       { title: 'Crown', href: '/crown' },
     ],

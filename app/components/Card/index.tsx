@@ -37,7 +37,7 @@ export default function Card({
        <div className="relative w-full h-[300px] w-[450px]">
           <Image
             src={
-              "https://jewelmer.com/cdn/shop/products/02LEQUI-P-A_360x.jpg?v=1599241004"
+              imageUrl || "https://jewelmer.com/cdn/shop/products/02LEQUI-P-A_360x.jpg?v=1599241004"
             }
             alt={name}
             fill

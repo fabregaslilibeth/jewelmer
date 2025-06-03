@@ -5,12 +5,15 @@ import { filters } from '../content/filters'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface FilterSidebarProps {
+  isCollectionVisible: boolean
   onFilterChange: (filters: Record<string, string[]>) => void
 }
 
-export default function FilterSidebar({ onFilterChange }: FilterSidebarProps) {
+export default function FilterSidebar({ isCollectionVisible, onFilterChange }: FilterSidebarProps) {
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({})
   const [isOpen, setIsOpen] = useState(false)
+
+  const filteredFilters = isCollectionVisible ? filters.filter(filter => filter.slug !== 'collection') : filters
 
   const handleOptionSelect = (filterTitle: string, optionValue: string) => {
     setSelectedFilters(prev => {
@@ -48,7 +51,7 @@ export default function FilterSidebar({ onFilterChange }: FilterSidebarProps) {
       <div className="hidden xl:block w-96 bg-menu-bg p-4 shadow-md h-fit">
         <h2 className="font-extrabold text-sm uppercase tracking-widest mb-4">FILTERS</h2>
         <div className="space-y-6">
-          {filters.map((filter) => (
+          {filteredFilters.map((filter) => (
             <div key={filter.slug} className="space-y-2 border-b border-gray-300 pb-4">
               <h3 className="text-sm uppercase font-extrabold">{filter.title}</h3>
               <div className="space-y-1 grid md:grid-cols-2">

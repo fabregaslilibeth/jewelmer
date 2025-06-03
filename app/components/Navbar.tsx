@@ -193,7 +193,15 @@ export default function Navbar() {
                                     animate="enter"
                                     exit="exit"
                                     transition={{ duration: 0.3, ease: [0.76, 0, 0.24, 1] }}
-                                    onClick={() => dropdownItem.dropdown && handleNestedDropdownClick(dropdownItem.title)}
+                                    onClick={() => {
+                                      if (dropdownItem.dropdown) {
+                                        handleNestedDropdownClick(dropdownItem.title);
+                                      } else if (dropdownItem.href) {
+                                        window.location.href = dropdownItem.href;
+                                        setActiveDropdown(null);
+                                        setActiveNestedDropdown(null);
+                                      }
+                                    }}
                                     className="w-full text-left px-4 py-4 text-sm group link link-border"
                                     style={{ transform: 'translateX(4px)', perspective: '120px', perspectiveOrigin: 'right' }}
                                   >
