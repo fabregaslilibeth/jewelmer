@@ -6,7 +6,7 @@ import { useState } from "react";
 interface CardProps {
   imageUrl?: string;
   name: string;
-  description: string;
+  description?: string;
   pricePhp: number;
   collection: string;
   gemstones: string[];
@@ -17,7 +17,6 @@ interface CardProps {
 export default function Card({
   imageUrl,
   name,
-  description,
   pricePhp,
   collection,
   gemstones,
@@ -28,16 +27,34 @@ export default function Card({
 
   return (
     <motion.div
-      className="relative rounded-xl shadow-lg overflow-hidden cursor-pointer"
+      className="relative h-[420px] overflow-hidden cursor-pointer shadow-lg"
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
     >
+       {/* Image Container */}
+       <div className="relative w-full h-[300px] w-[450px]">
+          <Image
+            src={
+              "https://jewelmer.com/cdn/shop/products/02LEQUI-P-A_360x.jpg?v=1599241004"
+            }
+            alt={name}
+            fill
+          />
+      </div>
+
       {/* Content Container */}
-      <div className="p-2 absolute right-0 z-20 flex flex-col justify-between h-full">
+      <div className="px-4 py-2">
+      <div className="flex items-center justify-between mb-2 w-full">
+          <h3 className="text-gray-700 font-semibold mb-1">{name}</h3>
+          <span className="font-semibold text-accent">
+            ₱{pricePhp.toLocaleString()}
+          </span>
+        </div>
+        
          {/* Details */}
-         <div className="flex flex-wrap gap-2 mt-2">
+         <div className="flex flex-wrap gap-1 items-start mt-2 w-full pb-4">
           <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full shadow-sm">
             {collection}
           </span>
@@ -56,26 +73,9 @@ export default function Card({
             {pearlColor}
           </span>
         </div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-accent mb-1">{name}</h3>
-          <span className="font-semibold text-accent">
-            ₱{pricePhp.toLocaleString()}
-          </span>
-        </div>
       </div>
 
-      {/* Image Container */}
-      <div className="relative w-full h-[300px] w-[450px]">
-        {imageUrl && (
-          <Image
-            src={
-              "https://jewelmer.com/cdn/shop/products/02LEQUI-P-A_360x.jpg?v=1599241004"
-            }
-            alt={name}
-            fill
-          />
-        )}
-      </div>
+     
 
       {/* Hover Overlay */}
       <motion.div

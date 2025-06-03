@@ -8,7 +8,7 @@ import Card from '../components/Card';
 
 const Collections = () => {
   const [filteredProducts, setFilteredProducts] = useState(products)
-  const [filters, setFilters] = useState<Record<string, string[]>>({}) // <-- track filters
+  const [filters, setFilters] = useState<Record<string, string[]>>({})
 
   const handleFilterChange = (filters: Record<string, string[]>) => {
     console.log('Active filters:', filters)
@@ -22,7 +22,7 @@ const Collections = () => {
 
     const newFilteredProducts = products.filter(product => {
       return Object.entries(filters).every(([filterKey, filterValues]) => {
-        if (filterValues.length === 0) return true // Ignore this filter if no selected values
+        if (filterValues.length === 0) return true
   
         const productValue = (product as any)[filterKey]
   
