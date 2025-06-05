@@ -106,9 +106,9 @@ export default function HomeContent() {
             </motion.div>
             <motion.div variants={cardVariants} custom={1} className="relative aspect-square">
               <img
-                src="https://jewelmer.com/cdn/shop/files/About-Us_2048x.jpg"
+                src="https://jewelmer.com/cdn/shop/files/J2506_BrandCampaign2024_Lifestyle_PH_3000x1000_WebBanner_2048x.jpg?v=1748852819"
                 alt="About Jewelmer"
-                className="object-cover w-full h-full rounded-lg"
+                className="object-contain w-full h-full rounded-lg"
               />
             </motion.div>
           </motion.div>
