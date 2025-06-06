@@ -10,9 +10,9 @@ export default function HomeContent() {
   const aboutRef = useRef(null);
   const storiesRef = useRef(null);
 
-  const isFeaturedInView = useInView(featuredRef, { once: true, margin: "-100px" });
-  const isAboutInView = useInView(aboutRef, { once: true, margin: "-100px" });
-  const isStoriesInView = useInView(storiesRef, { once: true, margin: "-100px" });
+  const isFeaturedInView = useInView(featuredRef, { once: true, margin: "-20%" });
+  const isAboutInView = useInView(aboutRef, { once: true, margin: "-20%" });
+  const isStoriesInView = useInView(storiesRef, { once: true, margin: "-20%" });
 
   const containerVariants = {
     hidden: { opacity: 0 },
