@@ -5,11 +5,11 @@ import { filters } from '../content/filters'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface FilterSidebarProps {
-  isCollectionVisible: boolean
+  isCollectionVisible?: boolean
   onFilterChange: (filters: Record<string, string[]>) => void
 }
 
-export default function FilterSidebar({ isCollectionVisible, onFilterChange }: FilterSidebarProps) {
+export default function FilterSidebar({ isCollectionVisible = true, onFilterChange }: FilterSidebarProps) {
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({})
   const [isOpen, setIsOpen] = useState(false)
 
