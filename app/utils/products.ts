@@ -1,4 +1,4 @@
-import { Product } from '../content/products';
+import { Product } from "../utils/types"
 
 type FilterRecord = Record<string, string[]>;
 
