@@ -2,7 +2,6 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import Banner from "./Banner";
 import LargeButton from "./Buttons/LargeButton";
 import LargeBanner from "./LargeBanner";
 import { collections } from "../content/collections";
