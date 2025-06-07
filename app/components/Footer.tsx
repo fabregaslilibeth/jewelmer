@@ -68,7 +68,7 @@ export default function Footer() {
 
   return (
     <motion.footer 
-      className="bg-accent text-white py-16 px-4 md:px-8"
+      className="bg-foreground text-white py-16 px-4 md:px-8"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-100px" }}
@@ -83,7 +83,7 @@ export default function Footer() {
             custom={0}
           >
             <h3 className="text-2xl font-bold mb-4">Jewelmer</h3>
-            <p className="text-gray-400 mb-4">
+            <p className="mb-4">
               Luxury meets sustainability in every piece we create.
             </p>
             <div className="flex space-x-4">
@@ -91,7 +91,7 @@ export default function Footer() {
                 <motion.a
                   key={social}
                   href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="link-dark hover:text-white transition-colors"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   custom={index}
@@ -111,16 +111,18 @@ export default function Footer() {
               custom={sectionIndex + 1}
             >
               <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
-              <ul className="space-y-2">
+              <ul className="space-y-2 transition-colors duration-300">
                 {section.links.map((link, linkIndex) => (
                   <motion.li 
                     key={link}
                     variants={linkVariants}
                     custom={linkIndex}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <Link 
                       href="#" 
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="link-dark relative inline-block after:content-[''] after:absolute after:w-full after:h-[1px] after:bg-white after:left-0 after:bottom-[-2px] after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
                     >
                       {link}
                     </Link>
@@ -133,7 +135,7 @@ export default function Footer() {
 
         {/* Bottom Section */}
         <motion.div 
-          className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400"
+          className="mt-12 pt-8 border-t border-white text-center"
           variants={linkVariants}
           custom={4}
         >

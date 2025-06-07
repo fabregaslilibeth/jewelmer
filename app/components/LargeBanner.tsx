@@ -9,7 +9,6 @@ interface BannerProps {
   subtitle?: string;
   className?: string;
   imageUrl: string;
-  height?: number;
   backgroundPosition?: string;
   backgroundSize?: string;
   backgroundRepeat?: string;
@@ -18,11 +17,11 @@ interface BannerProps {
 const Banner: FC<BannerProps> = ({
   className = "",
   imageUrl,
-  height = 600,
   backgroundPosition = 'center',
   backgroundSize = 'cover',
   backgroundRepeat = 'no-repeat',
 }) => {
+  const height = 600;
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const BLOCK_SIZE = 50; // Fixed block size in pixels
 
@@ -69,7 +68,7 @@ const Banner: FC<BannerProps> = ({
   const numberOfColumns = Math.ceil(dimensions.width / BLOCK_SIZE);
 
   return (
-    <div className={`w-full relative shadow-lg overflow-hidden ${className}`} style={{ height: `${height}px` }}>
+    <div className={`w-full relative shadow-lg overflow-hidden h-[200px] sm:h-[300px] md:h-[400px] lg:h-[500px] ${className}`}>
       <div 
         className="absolute inset-0 bg-cover"
         style={{
@@ -79,24 +78,6 @@ const Banner: FC<BannerProps> = ({
           backgroundRepeat: backgroundRepeat,
         }}
       />
-      {/* <div className="relative z-10 p-8 h-full flex flex-col justify-center">
-        <motion.h1 
-          className="text-4xl font-bold mb-4 text-white"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          {title}
-        </motion.h1>
-        <motion.p 
-          className="text-lg text-white opacity-90"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-        >
-          {subtitle}
-        </motion.p>
-      </div> */}
       <div className="absolute inset-0 flex w-full h-full">
         {dimensions.height > 0 && [...Array(numberOfColumns)].map((_, index) => (
           <div key={index} className={styles.column}>

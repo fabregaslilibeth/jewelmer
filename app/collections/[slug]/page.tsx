@@ -37,17 +37,16 @@ const CollectionPage = () => {
     if (collectionFiltered.length > 0 && tagFiltered.length === 0) {
       setFilterUsed('collection');
     }
-  }, [collectionName]);
+  }, [collectionName, nameParam]);
 
   const handleFilterChange = (filters: Record<string, string[]>) => {
-    console.log('Active filters:', filters)
     const newFilteredProducts = filterProducts(collectionProducts, filters)
     setFilteredProducts(newFilteredProducts)
   }
 
   useEffect(() => {
     handleFilterChange(filters)
-  }, [filters])
+  }, [filters, handleFilterChange])
 
   return (
     <div className="min-h-screen">
