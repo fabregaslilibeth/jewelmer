@@ -67,3 +67,17 @@ body {
   background: var(--menu-text);
   color: var(--menu-bg);
 }
+
+
+.link-dark {
+  text-align: center;
+  color: var(--menu-bg);
+  transition: all 0.3s ease;
+}
+
+.link-dark:hover {
+  opacity: 0.8;
+  /* background: var(--menu-bg); */
+  color: var(--secondary);
+}
+
