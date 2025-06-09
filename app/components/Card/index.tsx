@@ -2,6 +2,10 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useAuth } from "@/app/context/AuthContext";
+import { db } from "@/app/utils/firebase";
+import { collection as firestoreCollection, addDoc, serverTimestamp } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 interface CardProps {
   imageUrl?: string;
@@ -24,6 +28,38 @@ export default function Card({
   pearlColor,
 }: CardProps) {
   const [isHovering, setIsHovering] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { user } = useAuth();
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      toast.error("Please login to add items to cart");
+      return;
+    }
+
+    try {
+      setIsAddingToCart(true);
+      const cartItem = {
+        userId: user.uid,
+        name,
+        pricePhp,
+        collection,
+        gemstones,
+        pearlShape,
+        pearlColor,
+        imageUrl,
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(firestoreCollection(db, "carts"), cartItem);
+      toast.success("Added to cart successfully!");
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add to cart");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
   return (
     <motion.div
@@ -37,10 +73,11 @@ export default function Card({
        <div className="relative w-full h-[300px] w-[450px]">
           <Image
             src={
-              imageUrl || "https://jewelmer.com/cdn/shop/products/02LEQUI-P-A_360x.jpg?v=1599241004"
+              imageUrl || ""
             }
             alt={name}
             fill
+            className="object-cover"
           />
       </div>
 
@@ -73,6 +110,18 @@ export default function Card({
             {pearlColor}
           </span>
         </div>
+
+        {/* Add to Cart Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddToCart();
+          }}
+          disabled={isAddingToCart}
+          className="w-full bg-accent text-white py-2 px-4 rounded-md hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isAddingToCart ? "Adding..." : "Add to Cart"}
+        </button>
       </div>
 
      
