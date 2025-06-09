@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { db } from '@/app/utils/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface CartItem {
   id: string;
@@ -13,19 +16,44 @@ interface CartItem {
 }
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    // Sample data - replace with your actual cart data
-    {
-      id: '1',
-      name: 'Golden South Sea Pearl Necklace',
-      price: 2999.99,
-      quantity: 1,
-      image: '/images/pearl-necklace.jpg'
-    }
-  ]);
+  const { user } = useAuth();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const updateQuantity = (id: string, newQuantity: number) => {
+  useEffect(() => {
+    if (!user) {
+      setCartItems([]);
+      setLoading(false);
+      return;
+    }
+
+    const cartRef = collection(db, 'carts');
+    const q = query(cartRef, where('userId', '==', user.uid));
+
+    // Set up real-time listener for cart items
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const items: CartItem[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        items.push({
+          id: doc.id,
+          name: data.name,
+          price: data.pricePhp,
+          quantity: data.quantity,
+          image: data.imageUrl
+        });
+      });
+      setCartItems(items);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [user]);
+
+  const updateQuantity = async (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
+    // TODO: Implement Firestore update
     setCartItems(items =>
       items.map(item =>
         item.id === id ? { ...item, quantity: newQuantity } : item
@@ -33,7 +61,8 @@ export default function CartPage() {
     );
   };
 
-  const removeItem = (id: string) => {
+  const removeItem = async (id: string) => {
+    // TODO: Implement Firestore delete
     setCartItems(items => items.filter(item => item.id !== id));
   };
 
@@ -41,11 +70,29 @@ export default function CartPage() {
   const shipping = 50;
   const total = subtotal + shipping;
 
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Loading cart...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
       
-      {cartItems.length === 0 ? (
+      {!user ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600 mb-4">Please sign in to view your cart</p>
+          <Link 
+            href="/login"
+            className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
+          >
+            Sign In
+          </Link>
+        </div>
+      ) : cartItems.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-600 mb-4">Your cart is empty</p>
           <Link 
@@ -70,7 +117,7 @@ export default function CartPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                  <p className="text-gray-600">${item.price?.toFixed(2)}</p>
                   <div className="flex items-center gap-4 mt-2">
                     <div className="flex items-center border rounded">
                       <button
@@ -97,7 +144,7 @@ export default function CartPage() {
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ${(item.price).toFixed(2)}
                   </p>
                 </div>
               </div>

@@ -5,6 +5,8 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { AuthProvider } from './context/AuthContext';
 import { Providers } from './providers';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const lato = Lato({
   variable: "--font-lato",
@@ -35,6 +37,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <ToastContainer position="bottom-right" />
           </AuthProvider>
         </Providers>
       </body>

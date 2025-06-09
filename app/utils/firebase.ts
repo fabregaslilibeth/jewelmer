@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   // Replace these with your Firebase config values
@@ -24,8 +25,9 @@ console.log('Firebase Config:', {
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 console.log('Firebase initialized:', !!app);
 console.log('Firebase Auth initialized:', !!auth);
 
-export { app, auth }; 
+export { app, auth, db }; 
