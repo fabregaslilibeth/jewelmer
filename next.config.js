@@ -7,6 +7,10 @@ const nextConfig = {
         hostname: 'jewelmer.com',
         pathname: '/cdn/shop/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
     ],
   },
 }
