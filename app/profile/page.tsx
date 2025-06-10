@@ -1,55 +1,170 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '../context/AuthContext';
+import { db } from '../utils/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { toast } from 'react-toastify';
+import Profile from '../components/Profile';
+
+interface Address {
+  id: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+interface PaymentInfo {
+  cardNumber: string;
+  cardHolder: string;
+  expiryDate: string;
+  cardType: string;
+}
+
+interface UserInfo {
+  name: string;
+  email: string;
+  bio: string;
+  location: string;
+  addresses: Address[];
+  payment: PaymentInfo;
+}
+
+interface SidebarItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const sidebarItems: SidebarItem[] = [
+  {
+    id: 'profile',
+    label: 'Account Settings',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    )
+  },
+  {
+    id: 'transactions',
+    label: 'Transaction History',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+    )
+  },
+  {
+    id: 'address',
+    label: 'Addresses',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    )
+  },
+  {
+    id: 'payments',
+    label: 'Payments',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    )
+  },
+  {
+    id: 'logout',
+    label: 'Logout',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      </svg>
+    )
+  }
+];
 
 export default function ProfilePage() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [userInfo, setUserInfo] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    bio: 'Frontend developer passionate about creating beautiful user experiences.',
-    location: 'San Francisco, CA',
-    addresses: [
-      {
-        id: '1',
-        street: '123 Main St',
-        city: 'San Francisco',
-        state: 'CA',
-        zipCode: '94105',
-        country: 'United States',
-        isDefault: true
-      },
-      {
-        id: '2',
-        street: '456 Market St',
-        city: 'San Francisco',
-        state: 'CA',
-        zipCode: '94103',
-        country: 'United States',
-        isDefault: false
-      }
-    ],
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    name: '',
+    email: '',
+    bio: '',
+    location: '',
+    addresses: [],
     payment: {
-      cardNumber: '**** **** **** 4242',
-      cardHolder: 'John Doe',
-      expiryDate: '12/25',
-      cardType: 'Visa'
+      cardNumber: '',
+      cardHolder: '',
+      expiryDate: '',
+      cardType: ''
     }
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          setUserInfo(userDoc.data() as UserInfo);
+        } else {
+          // Initialize user document with default values
+          const defaultUserData: UserInfo = {
+            name: user.displayName || '',
+            email: user.email || '',
+            bio: '',
+            location: '',
+            addresses: [],
+            payment: {
+              cardNumber: '',
+              cardHolder: '',
+              expiryDate: '',
+              cardType: ''
+            }
+          };
+          await setDoc(userDocRef, defaultUserData);
+          setUserInfo(defaultUserData);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        toast.error('Failed to load user data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   const handleEdit = () => {
     setIsEditing(!isEditing);
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    setEditingAddressId(null);
-    // Here save the changes to backend
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, userInfo);
+      setIsEditing(false);
+      setEditingAddressId(null);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error saving user data:', error);
+      toast.error('Failed to save profile');
+    }
   };
 
   const handleLogout = async () => {
@@ -99,378 +214,364 @@ export default function ProfilePage() {
     });
   };
 
+  console.log(userInfo);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen shadow-lg bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-white shadow rounded-lg p-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+              <div className="space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          {/* Profile Header */}
-          <div className="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600">
-            <div className="absolute -bottom-16 left-8">
-              <div className="relative h-32 w-32 rounded-full border-4 border-white overflow-hidden">
+    <div className="max-w-7xl shadow-lg mx-auto min-h-screen bg-gray-200 relative my-10">
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="w-64 bg-white h-full absolute left-0 top-0 bottom-0 pt-8">
+          <div className="p-6">
+            <div className="flex items-center flex-col space-x-3 mb-8">
+              <div className="relative h-12 w-12 rounded-full overflow-hidden">
                 <Image
-                  src="/placeholder-avatar.jpg"
+                  src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                   alt="Profile"
                   fill
                   className="object-cover"
                 />
               </div>
+              <div className="my-4">
+                <h2 className="text-lg font-semibold text-gray-900">{userInfo.name}</h2>
+                <p className="text-sm text-gray-500">{userInfo.email}</p>
+              </div>
             </div>
+            <nav className="space-y-1">
+              {sidebarItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === 'logout') {
+                      handleLogout();
+                    } else {
+                      setActiveTab(item.id);
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-md ${
+                    activeTab === item.id
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </div>
+                  {
+                    item.id !== 'logout' && (
+                      <svg
+                      className={`w-5 h-5 transform transition-transform ${
+                        activeTab === item.id ? 'rotate-90' : ''
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                    )
+                  }
+                </button>
+              ))}
+            </nav>
           </div>
+        </div>
 
-          {/* Profile Content */}
-          <div className="pt-20 pb-8 px-8">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{userInfo.name}</h1>
-                <p className="text-gray-600">{userInfo.email}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Logout
-              </button>
-            </div>
+        {/* Main Content */}
+        <div className="flex-1 ml-64">
+          <div className="py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto">
+              <div className="">
 
-            {/* Tabs */}
-            <div className="border-b border-gray-200 mb-6">
-              <nav className="-mb-px flex space-x-8">
-                <button
-                  onClick={() => setActiveTab('profile')}
-                  className={`${
-                    activeTab === 'profile'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Profile
-                </button>
-                <button
-                  onClick={() => setActiveTab('address')}
-                  className={`${
-                    activeTab === 'address'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Address
-                </button>
-                <button
-                  onClick={() => setActiveTab('payments')}
-                  className={`${
-                    activeTab === 'payments'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Payments
-                </button>
-              </nav>
-            </div>
-
-            {/* Tab Content */}
-            <div className="space-y-6">
-              {activeTab === 'profile' && (
-                <>
-                  <div className="flex justify-end mb-4">
-                    <button
-                      onClick={handleEdit}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      {isEditing ? 'Cancel' : 'Edit Profile'}
-                    </button>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-medium text-gray-900">About</h2>
-                    {isEditing ? (
-                      <textarea
-                        className="mt-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        rows={4}
-                        value={userInfo.bio}
-                        onChange={(e) => setUserInfo({ ...userInfo, bio: e.target.value })}
-                      />
-                    ) : (
-                      <p className="mt-2 text-gray-600">{userInfo.bio}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <h2 className="text-lg font-medium text-gray-900">Location</h2>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="mt-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        value={userInfo.location}
-                        onChange={(e) => setUserInfo({ ...userInfo, location: e.target.value })}
-                      />
-                    ) : (
-                      <p className="mt-2 text-gray-600">{userInfo.location}</p>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {activeTab === 'address' && (
-                <>
-                  <div className="flex justify-end mb-4">
-                    <button
-                      onClick={handleAddAddress}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      Add Address
-                    </button>
-                  </div>
+                {/* Profile Content */}
+                <div className="pt-20 pb-8 px-8">
+                 
+                  {/* Tab Content */}
                   <div className="space-y-6">
-                    {userInfo.addresses.map((address) => (
-                      <div key={address.id} className="border rounded-lg p-4 relative">
-                        {editingAddressId === address.id ? (
-                          <div className="space-y-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700">Street Address</label>
-                              <input
-                                type="text"
-                                className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                value={address.street}
-                                onChange={(e) => setUserInfo({
-                                  ...userInfo,
-                                  addresses: userInfo.addresses.map(addr =>
-                                    addr.id === address.id ? { ...addr, street: e.target.value } : addr
-                                  )
-                                })}
-                              />
-                            </div>
+                    {activeTab === 'profile' && (
+                      <Profile handleSave={handleSave} />
+                    )}
 
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">City</label>
-                                <input
-                                  type="text"
-                                  className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                  value={address.city}
-                                  onChange={(e) => setUserInfo({
-                                    ...userInfo,
-                                    addresses: userInfo.addresses.map(addr =>
-                                      addr.id === address.id ? { ...addr, city: e.target.value } : addr
-                                    )
-                                  })}
-                                />
-                              </div>
+                    {activeTab === 'address' && (
+                      <>
+                        <div className="flex justify-end mb-4">
+                          <button
+                            onClick={handleAddAddress}
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            Add Address
+                          </button>
+                        </div>
+                        <div className="space-y-6">
+                          {userInfo.addresses.map((address) => (
+                            <div key={address.id} className="border rounded-lg p-4 relative">
+                              {editingAddressId === address.id ? (
+                                <div className="space-y-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700">Street Address</label>
+                                    <input
+                                      type="text"
+                                      className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                      value={address.street}
+                                      onChange={(e) => setUserInfo({
+                                        ...userInfo,
+                                        addresses: userInfo.addresses.map(addr =>
+                                          addr.id === address.id ? { ...addr, street: e.target.value } : addr
+                                        )
+                                      })}
+                                    />
+                                  </div>
 
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">State</label>
-                                <input
-                                  type="text"
-                                  className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                  value={address.state}
-                                  onChange={(e) => setUserInfo({
-                                    ...userInfo,
-                                    addresses: userInfo.addresses.map(addr =>
-                                      addr.id === address.id ? { ...addr, state: e.target.value } : addr
-                                    )
-                                  })}
-                                />
-                              </div>
-                            </div>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700">City</label>
+                                      <input
+                                        type="text"
+                                        className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        value={address.city}
+                                        onChange={(e) => setUserInfo({
+                                          ...userInfo,
+                                          addresses: userInfo.addresses.map(addr =>
+                                            addr.id === address.id ? { ...addr, city: e.target.value } : addr
+                                          )
+                                        })}
+                                      />
+                                    </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">ZIP Code</label>
-                                <input
-                                  type="text"
-                                  className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                  value={address.zipCode}
-                                  onChange={(e) => setUserInfo({
-                                    ...userInfo,
-                                    addresses: userInfo.addresses.map(addr =>
-                                      addr.id === address.id ? { ...addr, zipCode: e.target.value } : addr
-                                    )
-                                  })}
-                                />
-                              </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700">State</label>
+                                      <input
+                                        type="text"
+                                        className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        value={address.state}
+                                        onChange={(e) => setUserInfo({
+                                          ...userInfo,
+                                          addresses: userInfo.addresses.map(addr =>
+                                            addr.id === address.id ? { ...addr, state: e.target.value } : addr
+                                          )
+                                        })}
+                                      />
+                                    </div>
+                                  </div>
 
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">Country</label>
-                                <input
-                                  type="text"
-                                  className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                  value={address.country}
-                                  onChange={(e) => setUserInfo({
-                                    ...userInfo,
-                                    addresses: userInfo.addresses.map(addr =>
-                                      addr.id === address.id ? { ...addr, country: e.target.value } : addr
-                                    )
-                                  })}
-                                />
-                              </div>
-                            </div>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700">ZIP Code</label>
+                                      <input
+                                        type="text"
+                                        className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        value={address.zipCode}
+                                        onChange={(e) => setUserInfo({
+                                          ...userInfo,
+                                          addresses: userInfo.addresses.map(addr =>
+                                            addr.id === address.id ? { ...addr, zipCode: e.target.value } : addr
+                                          )
+                                        })}
+                                      />
+                                    </div>
 
-                            <div className="flex justify-end space-x-2">
-                              <button
-                                onClick={() => setEditingAddressId(null)}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => setEditingAddressId(null)}
-                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-gray-900 font-medium">{address.street}</p>
-                                <p className="text-gray-600">{address.city}, {address.state} {address.zipCode}</p>
-                                <p className="text-gray-600">{address.country}</p>
-                                {address.isDefault && (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
-                                    Default
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() => handleEditAddress(address.id)}
-                                  className="p-2 text-gray-400 hover:text-gray-500"
-                                >
-                                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                  </svg>
-                                </button>
-                                {!address.isDefault && (
-                                  <>
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700">Country</label>
+                                      <input
+                                        type="text"
+                                        className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        value={address.country}
+                                        onChange={(e) => setUserInfo({
+                                          ...userInfo,
+                                          addresses: userInfo.addresses.map(addr =>
+                                            addr.id === address.id ? { ...addr, country: e.target.value } : addr
+                                          )
+                                        })}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="flex justify-end space-x-2">
                                     <button
-                                      onClick={() => handleSetDefaultAddress(address.id)}
-                                      className="p-2 text-gray-400 hover:text-gray-500"
+                                      onClick={() => setEditingAddressId(null)}
+                                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                                     >
-                                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                      </svg>
+                                      Cancel
                                     </button>
                                     <button
-                                      onClick={() => handleDeleteAddress(address.id)}
-                                      className="p-2 text-gray-400 hover:text-red-500"
+                                      onClick={() => setEditingAddressId(null)}
+                                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                     >
-                                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                      </svg>
+                                      Save
                                     </button>
-                                  </>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <p className="text-gray-900 font-medium">{address.street}</p>
+                                      <p className="text-gray-600">{address.city}, {address.state} {address.zipCode}</p>
+                                      <p className="text-gray-600">{address.country}</p>
+                                      {address.isDefault && (
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
+                                          Default
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex space-x-2">
+                                      <button
+                                        onClick={() => handleEditAddress(address.id)}
+                                        className="p-2 text-gray-400 hover:text-gray-500"
+                                      >
+                                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                      </button>
+                                      {!address.isDefault && (
+                                        <>
+                                          <button
+                                            onClick={() => handleSetDefaultAddress(address.id)}
+                                            className="p-2 text-gray-400 hover:text-gray-500"
+                                          >
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            onClick={() => handleDeleteAddress(address.id)}
+                                            className="p-2 text-gray-400 hover:text-red-500"
+                                          >
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {activeTab === 'payments' && (
+                      <>
+                        <div className="flex justify-end mb-4">
+                          <button
+                            onClick={handleEdit}
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            {isEditing ? 'Cancel' : 'Edit Payment'}
+                          </button>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <h2 className="text-lg font-medium text-gray-900">Card Information</h2>
+                            <div className="mt-4 space-y-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">Card Number</label>
+                                {isEditing ? (
+                                  <input
+                                    type="text"
+                                    className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    value={userInfo.payment.cardNumber}
+                                    onChange={(e) => setUserInfo({
+                                      ...userInfo,
+                                      payment: { ...userInfo.payment, cardNumber: e.target.value }
+                                    })}
+                                  />
+                                ) : (
+                                  <p className="mt-1 text-gray-600">{userInfo.payment.cardNumber}</p>
                                 )}
                               </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">Card Holder</label>
+                                {isEditing ? (
+                                  <input
+                                    type="text"
+                                    className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    value={userInfo.payment.cardHolder}
+                                    onChange={(e) => setUserInfo({
+                                      ...userInfo,
+                                      payment: { ...userInfo.payment, cardHolder: e.target.value }
+                                    })}
+                                  />
+                                ) : (
+                                  <p className="mt-1 text-gray-600">{userInfo.payment.cardHolder}</p>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                      value={userInfo.payment.expiryDate}
+                                      onChange={(e) => setUserInfo({
+                                        ...userInfo,
+                                        payment: { ...userInfo.payment, expiryDate: e.target.value }
+                                      })}
+                                    />
+                                  ) : (
+                                    <p className="mt-1 text-gray-600">{userInfo.payment.expiryDate}</p>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700">Card Type</label>
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                      value={userInfo.payment.cardType}
+                                      onChange={(e) => setUserInfo({
+                                        ...userInfo,
+                                        payment: { ...userInfo.payment, cardType: e.target.value }
+                                      })}
+                                    />
+                                  ) : (
+                                    <p className="mt-1 text-gray-600">{userInfo.payment.cardType}</p>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {activeTab === 'payments' && (
-                <>
-                  <div className="flex justify-end mb-4">
-                    <button
-                      onClick={handleEdit}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      {isEditing ? 'Cancel' : 'Edit Payment'}
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <h2 className="text-lg font-medium text-gray-900">Card Information</h2>
-                      <div className="mt-4 space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Card Number</label>
-                          {isEditing ? (
-                            <input
-                              type="text"
-                              className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                              value={userInfo.payment.cardNumber}
-                              onChange={(e) => setUserInfo({
-                                ...userInfo,
-                                payment: { ...userInfo.payment, cardNumber: e.target.value }
-                              })}
-                            />
-                          ) : (
-                            <p className="mt-1 text-gray-600">{userInfo.payment.cardNumber}</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Card Holder</label>
-                          {isEditing ? (
-                            <input
-                              type="text"
-                              className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                              value={userInfo.payment.cardHolder}
-                              onChange={(e) => setUserInfo({
-                                ...userInfo,
-                                payment: { ...userInfo.payment, cardHolder: e.target.value }
-                              })}
-                            />
-                          ) : (
-                            <p className="mt-1 text-gray-600">{userInfo.payment.cardHolder}</p>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                value={userInfo.payment.expiryDate}
-                                onChange={(e) => setUserInfo({
-                                  ...userInfo,
-                                  payment: { ...userInfo.payment, expiryDate: e.target.value }
-                                })}
-                              />
-                            ) : (
-                              <p className="mt-1 text-gray-600">{userInfo.payment.expiryDate}</p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700">Card Type</label>
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                value={userInfo.payment.cardType}
-                                onChange={(e) => setUserInfo({
-                                  ...userInfo,
-                                  payment: { ...userInfo.payment, cardType: e.target.value }
-                                })}
-                              />
-                            ) : (
-                              <p className="mt-1 text-gray-600">{userInfo.payment.cardType}</p>
-                            )}
                           </div>
                         </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
                   </div>
-                </>
-              )}
-            </div>
 
-            {isEditing && (
-              <div className="mt-6">
-                <button
-                  onClick={handleSave}
-                  className="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  Save Changes
-                </button>
+                  
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
