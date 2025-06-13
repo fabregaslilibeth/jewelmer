@@ -121,7 +121,7 @@ export default function HomeContent() {
             initial="hidden"
             animate={isAboutInView ? "visible" : "hidden"}
           >
-            <h2 className="text-3xl mb-6">Luxury meets Sustainability</h2>
+            <h2 className="text-3xl mb-6">Luxury meets sustainability</h2>
             <p className="mb-4">
               Jewelmer is an international high jewelry Maison founded in 1979,
               working in harmony with nature to sustainably produce the finest
